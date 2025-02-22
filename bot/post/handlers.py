@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from config.settings import ROOT_USER_ID,CHANNEL_CHAT_ID, BOT_USERNAME
+from config.settings import ROOT_USER_ID,CHANNEL_CHAT_ID, BOT_USERNAME, CHANNEL_USERNAME
 from bot.dispatcher import dispatcher
 from models.models import Poll, VoteOption, UserVoteItem
 from .states import PostingStates
@@ -64,7 +64,7 @@ async def post_poll(messageid: str, bot: Bot, context: dict):
         )
     new_message = await bot.copy_message(
         chat_id=CHANNEL_CHAT_ID,
-        from_chat_id=messageid,
+        from_chat_id=ROOT_USER_ID,
         reply_markup=createInlineSchemaForPoll(poll=poll),
         message_id=poll.message_id
     )
@@ -93,6 +93,12 @@ async def vote_handler(message : Message, bot: Bot, state: FSMContext):
     if len(message.text.split(' ')) < 2: return 
     args_rawstring = message.text.split(' ')[1]
     if args_rawstring.startswith('poll_'):
+        try:
+            membership = await bot.get_chat_member(CHANNEL_CHAT_ID, message.from_user.id)
+            if membership.status not in ["member", "administrator", "creator"]:
+                await ask_for_sub(message, bot, state)
+                return 
+        except: return  
         args = args_rawstring.split('_')
         poll_id = args[1]
         vote_id = args[3]
@@ -111,8 +117,19 @@ async def vote_handler(message : Message, bot: Bot, state: FSMContext):
         uservote.option = option
         uservote.save()
         await update_poll(poll, bot=bot)
-        answer_text = 'Ваш голос был принят' if created else 'Ваш голос был изменен' 
+        answer_text = 'Ovozingiz qabul qilindi' if created else 'Ovozingiz o`zgartirildi' 
         await message.answer(text=answer_text)
 
          
 
+async def ask_for_sub(message: Message, bot: Bot, state : FSMContext):
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="Obuna bo'lish",
+        url=f"t.me/{CHANNEL_USERNAME}"
+    )
+    builder.adjust(1)
+    await message.answer(
+        text='Ovoz bera olish uchun kanalga obuna bolishingiz lozim!', 
+        reply_markup=builder.as_markup(),
+    )

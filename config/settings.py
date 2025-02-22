@@ -127,4 +127,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ROOT_USER_ID = os.getenv('ROOT_USER_ID')
 CHANNEL_CHAT_ID = os.getenv('CHANNEL_CHAT_ID')
 BOT_USERNAME = os.getenv('BOT_USERNAME')
-
+CHANNEL_USERNAME = os.getenv('CHANNEL_USERNAME')
