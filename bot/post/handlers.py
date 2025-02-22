@@ -19,7 +19,7 @@ async def post_start_handler(message : Message, bot: Bot, state: FSMContext):
     await state.clear()
     if str(message.chat.id) != ROOT_USER_ID:
         
-        await message.answer(f'You are not root user ROOTUSERID : {ROOT_USER_ID} {type(ROOT_USER_ID)} CURRENT: {message.chat.id} {type(message.chat.id)}')
+        await message.answer(f'You have not permission')
         return
     await message.answer('Введите контент нового поста')
     await state.set_state(PostingStates.GETTING_POSTCONTENT) 
@@ -36,7 +36,7 @@ async def getting_postcontent(message : Message, bot : Bot, state : FSMContext):
 async def getVoteItemHandler(message : Message, bot : Bot, state : FSMContext):
     context = await state.get_data()
     if message.text == VOTES_ACCEPT_GOPOST_BTNTEXT:
-        await post_poll(message, bot, context)
+        await post_poll(context['messageid'], bot, context)
         await state.clear()
         return 
     
@@ -47,26 +47,24 @@ async def getVoteItemHandler(message : Message, bot : Bot, state : FSMContext):
     vote_items : list = context.get('items', [])
     vote_items.append(message.text)
     await state.update_data(items=vote_items)
-    await message.answer(json.dumps(context, indent=4))
 
     
 
 
 
 
-async def post_poll(message: Message, bot: Bot, context: dict):
+async def post_poll(messageid: str, bot: Bot, context: dict):
     poll = Poll.objects.create(
-        message_id = message.message_id
+        message_id = messageid
     )
     for name in context['items']:
         vote_item = VoteOption.objects.create(
             text=name,
             poll=poll
         )
-    print('bot_message_id:', message.message_id)
     new_message = await bot.copy_message(
         chat_id=CHANNEL_CHAT_ID,
-        from_chat_id=message.chat.id,
+        from_chat_id=messageid,
         reply_markup=createInlineSchemaForPoll(poll=poll),
         message_id=poll.message_id
     )
