@@ -4,3 +4,7 @@ class PostingStates(StatesGroup):
     GETTING_POSTCONTENT = State()
     GETTING_VOTEITEM = State()
     VERIFYING = State()
+
+
+class VotingStates(StatesGroup):
+    VERIFY_CAPTCHA = State()
