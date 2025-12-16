@@ -196,7 +196,8 @@ async def captcha_handler(message : Message, bot : Bot, state : FSMContext):
 
     uservote, created = UserVoteItem.objects.get_or_create(
         user_id=message.from_user.id,
-        poll=poll
+        poll=poll,
+        user_number = context['number'],
     )
     uservote.option = option
     uservote.save()

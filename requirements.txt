@@ -3,3 +3,5 @@ aiogram
 pillow
 numpy 
 noise
+pandas 
+openpyxl
