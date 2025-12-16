@@ -15,7 +15,7 @@ from config.settings import ROOT_USER_ID,CHANNEL_CHAT_ID, BOT_USERNAME, CHANNEL_
 from bot.dispatcher import dispatcher
 from models.models import Poll, VoteOption, UserVoteItem
 from .states import PostingStates, VotingStates
-from .keyboards import  onVoteAcceptKeyboard, createInlineSchemaForPoll
+from .keyboards import  onVoteAcceptKeyboard, createInlineSchemaForPoll, onContactRequestKeyboard
 from .locales import VOTES_ACCEPT_GOPOST_BTNTEXT
 
 @dispatcher.message(Command(commands=['post']))
@@ -116,9 +116,9 @@ async def update_poll(poll : Poll, bot: Bot):
 #     )
 #     await message.answer()
 
-
 @dispatcher.message(Command(commands=['start']))
-async def vote_handler(message : Message, bot: Bot, state: FSMContext):
+async def request_contact(message : Message, bot : Bot, state : FSMContext):
+    await state.clear()
     if len(message.text.split(' ') ) < 2: return
     args_rawstring = message.text.split(' ')[1]
     if args_rawstring.startswith('poll_'):
@@ -131,17 +131,46 @@ async def vote_handler(message : Message, bot: Bot, state: FSMContext):
         args = args_rawstring.split('_')
         poll_id = args[1]
         vote_id = args[3]
-        
         await state.update_data(poll_id=poll_id)
         await state.update_data(vote_id=vote_id)    
-        img, answer = generate_captcha_image()
-        await state.update_data(answer=str(answer))
+        
+    await message.answer(
+        text='Iltimos, kontaktingizni yuboring',
+        reply_markup=onContactRequestKeyboard,
+    )
+    await state.set_state(VotingStates.VERIFY_CONTACT)
 
-        await message.answer_photo(
-            photo=img,
-            caption='Javobini kiring' 
+
+@dispatcher.message(VotingStates.VERIFY_CONTACT)
+async def vote_handler(message : Message, bot: Bot, state: FSMContext):
+    if not message.contact:
+        await message.answer(
+            text='Iltimos, kontakt yuboring,',
+            reply_markup=onContactRequestKeyboard,
         )
-        await state.set_state(VotingStates.VERIFY_CAPTCHA)
+        return
+    if message.contact.user_id != message.from_user.id:
+        await message.answer(
+            text='Yuborilgan kontakt sizga tegishli emas,\n ilitmos o`zingizni kontaktingizni yuboring',
+            reply_markup=onContactRequestKeyboard,
+        )
+        return 
+    number = message.contact.phone_number
+    if number.startswith('+'):
+        number = number[1:]
+    if not number.startswith('998'):
+        await message.answer('Not Uzbekistan Number, banned')
+        await state.clear()
+        return
+    await state.update_data(number=number)
+    img, answer = generate_captcha_image()
+    await state.update_data(answer=str(answer))
+
+    await message.answer_photo(
+        photo=img,
+        caption='Javobini kiring' 
+    )
+    await state.set_state(VotingStates.VERIFY_CAPTCHA)
         
         
 

@@ -18,6 +18,8 @@ class UserVoteItem(models.Model):
         to=Poll,
         on_delete=models.CASCADE,
     )
+    user_number = models.CharField(null=True, max_length=128)
+
     option = models.ForeignKey(
         to=VoteOption,
         on_delete=models.CASCADE,

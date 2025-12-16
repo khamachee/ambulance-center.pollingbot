@@ -14,6 +14,14 @@ onVoteAcceptKeyboard = ReplyKeyboardMarkup(keyboard=[
     ]
 ], resize_keyboard=True)
 
+onContactRequestKeyboard = ReplyKeyboardMarkup(keyboard=[
+    [
+        KeyboardButton(
+            text='Kontaktni yuborish',
+            request_contact=True,
+        )
+    ]
+])
 
 def VotesInlineKeyboardBuilder(names_list: list):
     builder = InlineKeyboardBuilder()

@@ -7,4 +7,5 @@ class PostingStates(StatesGroup):
 
 
 class VotingStates(StatesGroup):
+    VERIFY_CONTACT = State()
     VERIFY_CAPTCHA = State()
