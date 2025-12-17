@@ -21,7 +21,7 @@ onContactRequestKeyboard = ReplyKeyboardMarkup(keyboard=[
             request_contact=True,
         )
     ]
-])
+], resize_keyboard=True)
 
 def VotesInlineKeyboardBuilder(names_list: list):
     builder = InlineKeyboardBuilder()
