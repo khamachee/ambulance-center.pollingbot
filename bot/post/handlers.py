@@ -33,6 +33,7 @@ async def post_start_handler(message : Message, bot: Bot, state: FSMContext):
 async def getting_postcontent(message : Message, bot : Bot, state : FSMContext):
     await state.update_data(messageid=message.message_id)
     await state.update_data(message_caption=message.text)
+    print('message caption', message.text)
     await message.answer('Теперь введите обьект голосования: ')
     await state.set_state(PostingStates.GETTING_VOTEITEM)
     
@@ -41,9 +42,10 @@ async def getting_postcontent(message : Message, bot : Bot, state : FSMContext):
 async def getVoteItemHandler(message : Message, bot : Bot, state : FSMContext):
     context = await state.get_data()
     if message.text == VOTES_ACCEPT_GOPOST_BTNTEXT:
-        await post_poll(context['messageid'], bot, context,)
+        poll : Poll = await post_poll(context['messageid'], bot, context,)
         await state.clear()
-        return 
+        await message.answer(f'Начата голосование. PID: {poll.id}')
+        return
     
     await message.answer(
         text=f'Получен обьект {message.text}, введите ещё или нажмите на кнопку {VOTES_ACCEPT_GOPOST_BTNTEXT} для поста опроса',
@@ -58,7 +60,7 @@ async def getVoteItemHandler(message : Message, bot : Bot, state : FSMContext):
 
 
 
-async def post_poll(messageid: str, bot: Bot, context: dict):
+async def post_poll(messageid: str, bot: Bot, context: dict) -> Poll:
     poll = Poll.objects.create(
         message_id = messageid
     )
@@ -73,18 +75,11 @@ async def post_poll(messageid: str, bot: Bot, context: dict):
         reply_markup=createInlineSchemaForPoll(poll=poll),
         message_id=poll.message_id, 
     )
-    await bot.edit_message_text(
-        chat_id=CHANNEL_CHAT_ID,
-        message_id=new_message.message_id,
-        text=f"{context['message_caption']}\n\n PID : `{poll.id}`",
-        parse_mode="Markdown",
-        reply_markup=createInlineSchemaForPoll(poll=poll),
-)
 
     print('new_message_id:', new_message.message_id)
     poll.message_id = new_message.message_id
     poll.save()
-
+    return poll
 
     
 async def update_poll(poll : Poll, bot: Bot):
